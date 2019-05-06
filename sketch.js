@@ -256,11 +256,15 @@ function RegenGraph()
             }
 
             gMatrix[i].push(1);
-
-            strNewHtml += '<td><select i="' + i + '" j="' + j + '" onChange="TableChanged(this);">';
-            strNewHtml += '<option value="0">0</option>';
-            strNewHtml += '<option value="1" selected>1</option>';
-            strNewHtml += '</select></td>';
+            
+            if(i < j)
+            {
+                strNewHtml += '<td><input type="checkbox" i="' + i + '" j="' + j + '" onChange="TableChanged(this);" checked></td>';
+            }
+            else
+            {
+                strNewHtml += '<td><input type="checkbox" i="' + i + '" j="' + j + '" onChange="TableChanged(this);" disabled></td>';
+            }
         }
 
         strNewHtml += '</tr>';
@@ -275,5 +279,5 @@ function TableChanged(arc)
 {
     if(arc == undefined) return;
 
-    gMatrix[parseInt(arc.getAttribute('i'))][parseInt(arc.getAttribute('j'))] = parseInt(arc.value);
+    gMatrix[parseInt(arc.getAttribute('i'))][parseInt(arc.getAttribute('j'))] = arc.checked;
 }
