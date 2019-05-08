@@ -1,6 +1,7 @@
 let screenSize = { w: 1280, h: 720 };
 let gNodeRadius = 15;
 let gPartOfSpeed = 0.1;
+let gOriented = false;
 
 let gMatrixShape = 5;
 let gMatrix = [ [0, 1, 1, 1, 1, 1, 1],
@@ -128,7 +129,8 @@ function setup()
     interface.innerHTML += 'Matrix shape: <div id="shape_counter"></div><br>';
     interface.innerHTML += '<button onClick="DecreaseShape();">Decrease</button>';
     interface.innerHTML += '<button onClick="IncreaseShape();">Increase</button>';
-    interface.innerHTML += ' Strength: <input id="strength_slider" value="100" type="range" min="20" max ="1000" step="10""><br><br>';
+    interface.innerHTML += ' Strength: <input id="strength_slider" value="100" type="range" min="20" max ="1000" step="10"><br><br>';
+    interface.innerHTML += ' <input type="checkbox" onChange="gOriented = this.checked; RegenGraph();" unchecked> Oriented<br><br>';
     interface.innerHTML += '<table id="adjacency_table" style="text-align: center;"></table>'
     document.getElementsByTagName('body')[0].appendChild(interface);
     shape_counter.innerHTML = gMatrixShape;
@@ -149,7 +151,7 @@ function draw()
     {
         for (let j = i + 1; j < gMatrixShape; j++)
         {
-            if (gMatrix[i][j] == 1)
+            if (gMatrix[i][j] == 1 || gMatrix[j][i] == 1)
             {
                 gNodes[i].communicate(gNodes[j]);
             }
@@ -164,9 +166,34 @@ function draw()
     {
         for (let j = i + 1; j < gMatrixShape; j++)
         {
-            if (gMatrix[i][j] == 1)
+            if (gMatrix[i][j] == 1 || gMatrix[j][i] == 1)
             {
                 line(gNodes[i].x, gNodes[i].y, gNodes[j].x, gNodes[j].y);
+
+                if(gOriented)
+                {
+                    let vBack = { x: gNodes[i].x - gNodes[j].x, y: gNodes[i].y - gNodes[j].y },
+                    vLen = Math.sqrt(vBack.x * vBack.x + vBack.y * vBack.y);
+
+                    vBack.x /= vLen;
+                    vBack.y /= vLen;
+
+                    vBack.x *= gNodeRadius;
+                    vBack.y *= gNodeRadius;
+
+                    if(gMatrix[i][j] == 1)
+                    {
+                        DrawPointer(gNodes[i].x, gNodes[i].y, gNodes[j].x + vBack.x, gNodes[j].y + vBack.y, 13, 9);
+                    }
+                    
+                    if(gMatrix[j][i] == 1)
+                    {
+                        vBack.x *= -1;
+                        vBack.y *= -1;
+
+                        DrawPointer(gNodes[j].x, gNodes[j].y, gNodes[i].x + vBack.x, gNodes[i].y + vBack.y, 13, 9);
+                    }
+                }
             }
         }
     }
@@ -257,7 +284,7 @@ function RegenGraph()
 
             gMatrix[i].push(1);
             
-            if(i < j)
+            if(gOriented || i < j)
             {
                 strNewHtml += '<td><input type="checkbox" i="' + i + '" j="' + j + '" onChange="TableChanged(this);" checked></td>';
             }
@@ -280,4 +307,32 @@ function TableChanged(arc)
     if(arc == undefined) return;
 
     gMatrix[parseInt(arc.getAttribute('i'))][parseInt(arc.getAttribute('j'))] = arc.checked;
+}
+
+function DrawPointer(x1, y1, x2, y2, length, angle)
+{
+    let vBack = { x: x1 - x2, y: y1 - y2 },
+        vLen = Math.sqrt(vBack.x * vBack.x + vBack.y * vBack.y);
+
+    vBack.x /= vLen;
+    vBack.y /= vLen;
+
+    vBack.x *= length;
+    vBack.y *= length;
+
+    let Rotated = Rotate(0, 0, vBack.x, vBack.y, angle);
+    line(x2, y2, x2 + Rotated[0], y2 + Rotated[1]);
+
+    Rotated = Rotate(0, 0, vBack.x, vBack.y, -angle);
+    line(x2, y2, x2 + Rotated[0], y2 + Rotated[1]);
+}
+
+function Rotate(cx, cy, x, y, angle)
+{
+    var radians = (Math.PI / 180) * angle,
+        cos = Math.cos(radians),
+        sin = Math.sin(radians),
+        nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+        ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+    return [nx, ny];
 }
