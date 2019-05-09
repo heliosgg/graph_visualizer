@@ -168,8 +168,6 @@ function draw()
         {
             if (gMatrix[i][j] == 1 || gMatrix[j][i] == 1)
             {
-                line(gNodes[i].x, gNodes[i].y, gNodes[j].x, gNodes[j].y);
-
                 if(gOriented)
                 {
                     let vBack = { x: gNodes[i].x - gNodes[j].x, y: gNodes[i].y - gNodes[j].y },
@@ -181,24 +179,49 @@ function draw()
                     vBack.x *= gNodeRadius;
                     vBack.y *= gNodeRadius;
 
-                    if(gMatrix[i][j] == 1)
+                    let fCurDelta = parseFloat(strength_slider.value) / 10;
+
+                    if(gMatrix[i][j] == 1 && gMatrix[j][i] == 1)
                     {
-                        DrawPointer(gNodes[i].x, gNodes[i].y, gNodes[j].x + vBack.x, gNodes[j].y + vBack.y, 13, 9);
-                    }
+                        let lastPoints = Line_bezier(gNodes[i].x - vBack.x, gNodes[i].y - vBack.y,
+                                                    gNodes[j].x + vBack.x, gNodes[j].y + vBack.y, fCurDelta);
+                        DrawPointer(lastPoints.x1, lastPoints.y1, lastPoints.x2, lastPoints.y2, 14, 10);
                     
-                    if(gMatrix[j][i] == 1)
-                    {
                         vBack.x *= -1;
                         vBack.y *= -1;
 
-                        DrawPointer(gNodes[j].x, gNodes[j].y, gNodes[i].x + vBack.x, gNodes[i].y + vBack.y, 13, 9);
+                        lastPoints = Line_bezier(gNodes[j].x - vBack.x, gNodes[j].y - vBack.y,
+                                                    gNodes[i].x + vBack.x, gNodes[i].y + vBack.y, fCurDelta);
+                        DrawPointer(lastPoints.x1, lastPoints.y1, lastPoints.x2, lastPoints.y2, 14, 10);
                     }
+                    else if(gMatrix[i][j] == 1 || gMatrix[j][i] == 1)
+                    {
+                        line(gNodes[i].x, gNodes[i].y, gNodes[j].x, gNodes[j].y);
+
+                        if(gMatrix[i][j] == 1)
+                        {
+                            DrawPointer(gNodes[i].x, gNodes[i].y, gNodes[j].x + vBack.x, gNodes[j].y + vBack.y, 13, 9);
+                        }
+                        
+                        if(gMatrix[j][i] == 1)
+                        {
+                            vBack.x *= -1;
+                            vBack.y *= -1;
+    
+                            DrawPointer(gNodes[j].x, gNodes[j].y, gNodes[i].x + vBack.x, gNodes[i].y + vBack.y, 13, 9);
+                        }
+                    }
+                }
+                else
+                {
+                    line(gNodes[i].x, gNodes[i].y, gNodes[j].x, gNodes[j].y);
                 }
             }
         }
     }
 
-    gNodes.forEach(n => { n.strength = parseInt(strength_slider.value); n.draw(); });
+    let iCurStrength = parseInt(strength_slider.value);
+    gNodes.forEach(n => { n.strength = iCurStrength; n.draw(); });
 
     stroke(0);
     noFill();
@@ -335,4 +358,25 @@ function Rotate(cx, cy, x, y, angle)
         nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
         ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
     return [nx, ny];
+}
+
+// returns two last points
+function Line_bezier(x1, y1, x2, y2, delta)
+{
+    let vCenter = { x: (x2 + x1) / 2, y: (y1 + y2)  / 2 },
+        vGuide = { x: -(y2 - y1), y: x2 - x1 },
+        vGuideLen  = Math.sqrt(vGuide.x * vGuide.x + vGuide.y * vGuide.y);
+
+    vGuide.x /= vGuideLen;
+    vGuide.y /= vGuideLen;
+
+    vGuide.x *= delta;
+    vGuide.y *= delta;
+
+    bezier(x1, y1, vCenter.x + vGuide.x, vCenter.y + vGuide.y, vCenter.x + vGuide.x, vCenter.y + vGuide.y, x2, y2);
+    
+    return {    "x1": bezierPoint(x1, vCenter.x + vGuide.x, vCenter.x + vGuide.x, x2, 0.9),
+                "y1": bezierPoint(y1, vCenter.y + vGuide.y, vCenter.y + vGuide.y, y2, 0.9),
+                "x2": bezierPoint(x1, vCenter.x + vGuide.x, vCenter.x + vGuide.x, x2, 1),
+                "y2": bezierPoint(y1, vCenter.y + vGuide.y, vCenter.y + vGuide.y, y2, 1) };
 }
