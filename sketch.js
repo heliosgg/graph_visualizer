@@ -305,15 +305,17 @@ function RegenGraph()
                 continue;
             }
 
-            gMatrix[i].push(1);
             
-            if(gOriented || i < j)
+            if(i < j)
             {
+                gMatrix[i].push(1);
                 strNewHtml += '<td><input type="checkbox" i="' + i + '" j="' + j + '" onChange="TableChanged(this);" checked></td>';
             }
             else
             {
-                strNewHtml += '<td><input type="checkbox" i="' + i + '" j="' + j + '" onChange="TableChanged(this);" disabled></td>';
+                gMatrix[i].push(0);
+                strNewHtml += '<td><input type="checkbox" i="' + i + '" j="' + j + '" onChange="TableChanged(this);" ' + 
+                    (gOriented ? 'unchecked' : 'disabled') + '></td>';
             }
         }
 
@@ -321,8 +323,6 @@ function RegenGraph()
     }
 
     adjacency_table.innerHTML = strNewHtml;
-
-    TableChanged();
 }
 
 function TableChanged(arc)
